@@ -1,10 +1,16 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
-from aiogram.types.input_file import BufferedInputFile
+from urllib.parse import unquote_plus
 
 import app.keyboards as kb
-from app.database.requests import set_user, get_item_by_id, get_contacts_by_category
+from app.database.requests import (
+    set_user,
+    get_item_by_id,
+    get_contacts_by_category,
+    get_feature_values,
+    get_items_by_feature,
+)
 
 router = Router()
 
@@ -35,55 +41,73 @@ async def catalog(callback: CallbackQuery):
     await callback.answer('')
     try:
         await callback.message.edit_text(
-            'Выберите категорию товара',
-            reply_markup=await kb.categories()
+            'Выберите характеристику:',
+            reply_markup=kb.feature_menu
         )
     except Exception:
         await callback.message.answer(
-            'Выберите категорию товара',
-            reply_markup=await kb.categories()
+            'Выберите характеристику:',
+            reply_markup=kb.feature_menu
         )
 
-@router.callback_query(F.data.startswith('category_'))
-async def category(callback: CallbackQuery):
+@router.callback_query(F.data.startswith('feature_'))
+async def feature_handler(callback: CallbackQuery):
     await callback.answer('')
-    category_id = callback.data.split('_')[1]
+    feature = callback.data.split('_', 1)[1]
+    values = await get_feature_values(feature)
     try:
         await callback.message.edit_text(
-            'Выберите товар по категории',
-            reply_markup=await kb.get_items(category_id)
+            'Выберите значение:',
+            reply_markup=kb.feature_values(feature, values)
         )
     except Exception:
         await callback.message.answer(
-            'Выберите товар по категории',
-            reply_markup=await kb.get_items(category_id)
+            'Выберите значение:',
+            reply_markup=kb.feature_values(feature, values)
+        )
+
+@router.callback_query(F.data.startswith('value_'))
+async def feature_value_handler(callback: CallbackQuery):
+    await callback.answer('')
+    _, feature, value_enc = callback.data.split('_', 2)
+    value = unquote_plus(value_enc)
+    items = await get_items_by_feature(feature, value)
+    try:
+        await callback.message.edit_text(
+            'Выберите товар:',
+            reply_markup=kb.feature_items(feature, value, items)
+        )
+    except Exception:
+        await callback.message.answer(
+            'Выберите товар:',
+            reply_markup=kb.feature_items(feature, value, items)
         )
 
 @router.callback_query(F.data.startswith('item_'))
 async def item_handler(callback: CallbackQuery):
-    item_id = callback.data.split('_')[1]
-    item = await get_item_by_id(item_id)
+    _, item_id, feature, value_enc = callback.data.split('_', 3)
+    value = unquote_plus(value_enc)
+    item = await get_item_by_id(int(item_id))
     await callback.answer('')
 
-    if item.image_blob:
-        try:
-            photo = BufferedInputFile(item.image_blob, filename="photo.png")
-            await callback.message.answer_photo(
-                photo,
-                caption=f'{item.name}.\n\n{item.description}\n\nЦена: {item.price}',
-                reply_markup=await kb.back_to_category(item.category_id)
-            )
-        except Exception as e:
-            print(f"Ошибка при открытии картинки: {e}")
-            await callback.message.answer(
-                f'Ошибка при открытии картинки!\n{item.name}.\n\n{item.description}\n\nЦена: {item.price}',
-                reply_markup=await kb.back_to_category(item.category_id)
-            )
-    else:
-        await callback.message.answer(
-            f'{item.name}.\n\n{item.description}\n\nЦена: {item.price}',
-            reply_markup=await kb.back_to_category(item.category_id)
-        )
+    if not item:
+        await callback.message.answer('Товар не найден')
+        return
+
+    text = (
+        f"{item['Цена']}\n"
+        f"Цена: {item['Наименование']}\n"
+        f"Код: {item['Код']}\n"
+        f"Вид: {item['Вид']}\n"
+        f"Пустотность: {item['Пустотность']}\n"
+        f"Цвет: {item['Цвет']}\n"
+        f"Фактура: {item['Фактура']}"
+    )
+
+    await callback.message.answer(
+        text,
+        reply_markup=kb.back_to_value(feature, value)
+    )
 
 @router.callback_query(F.data == "contacts")
 async def contacts_handler(callback: CallbackQuery):
