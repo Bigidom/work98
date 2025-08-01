@@ -9,8 +9,8 @@ load_dotenv()
 # Проверяем переменные
 if not os.getenv('TG_TOKEN'):
     sys.exit("Ошибка: Не найден TG_TOKEN в .env файле!")
-if not os.getenv('DB_URL'):
-    sys.exit("Ошибка: Не найден DB_URL в .env файле!")
+
+# DB_URL не обязателен, т.к. БД по умолчанию 'оригинал.sqlite3'
 
 from aiogram import Bot, Dispatcher
 from app.handlers import router
