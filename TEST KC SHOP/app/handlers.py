@@ -95,13 +95,13 @@ async def item_handler(callback: CallbackQuery):
         return
 
     text = (
-        f"{item['Цена']}\n"
-        f"Цена: {item['Наименование']}\n"
-        f"Код: {item['Код']}\n"
-        f"Вид: {item['Вид']}\n"
-        f"Пустотность: {item['Пустотность']}\n"
-        f"Цвет: {item['Цвет']}\n"
-        f"Фактура: {item['Фактура']}"
+        f"Наименование: {item['name']}\n"
+        f"Цена: {item['price']}\n"
+        f"Код: {item['code']}\n"
+        f"Вид: {item['type']}\n"
+        f"Пустотность: {item['emptiness']}\n"
+        f"Цвет: {item['color']}\n"
+        f"Фактура: {item['texture']}"
     )
 
     await callback.message.answer(
