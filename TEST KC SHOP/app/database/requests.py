@@ -32,7 +32,7 @@ async def get_items_by_feature(feature_key: str, value: str):
             text(f'SELECT rowid, * FROM items WHERE "{column}" = :val'),
             {"val": value}
         )
-        return result.fetchall()
+        return result.mappings().all()
 
 async def get_item_by_id(item_id: int):
     async with async_session() as session:
