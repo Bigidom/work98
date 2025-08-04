@@ -20,7 +20,9 @@ async def get_feature_values(feature_key: str):
     if not column:
         return []
     async with async_session() as session:
-        result = await session.execute(text(f'SELECT DISTINCT "{column}" FROM items WHERE "{column}" != ""'))
+        result = await session.execute(
+            text(f'SELECT DISTINCT "{column}" FROM items WHERE "{column}" != ""')
+        )
         return [row[0] for row in result.fetchall()]
 
 async def get_items_by_feature(feature_key: str, value: str):
@@ -30,15 +32,31 @@ async def get_items_by_feature(feature_key: str, value: str):
     async with async_session() as session:
         result = await session.execute(
             text(f'SELECT rowid, * FROM items WHERE "{column}" = :val'),
-            {"val": value}
+            {"val": value},
         )
+        return result.mappings().all()
+
+async def get_items_by_filters(filters: dict):
+    conditions = []
+    params = {}
+    for key, value in filters.items():
+        column = FEATURE_COLUMNS.get(key)
+        if column and value:
+            param_name = f"val_{key}"
+            conditions.append(f'"{column}" = :{param_name}')
+            params[param_name] = value
+    if not conditions:
+        return []
+    query = "SELECT rowid, * FROM items WHERE " + " AND ".join(conditions)
+    async with async_session() as session:
+        result = await session.execute(text(query), params)
         return result.mappings().all()
 
 async def get_item_by_id(item_id: int):
     async with async_session() as session:
         result = await session.execute(
             text('SELECT rowid, * FROM items WHERE rowid = :id'),
-            {"id": item_id}
+            {"id": item_id},
         )
         row = result.fetchone()
         if not row:
@@ -52,6 +70,7 @@ async def get_contact_categories():
 
 async def get_contacts_by_category(category_id):
     async with async_session() as session:
-        return await session.scalars(select(Contact).where(Contact.category_id == int(category_id)))
-    
-    
+        return await session.scalars(
+            select(Contact).where(Contact.category_id == int(category_id))
+        )
+

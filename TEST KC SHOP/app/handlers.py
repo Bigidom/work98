@@ -10,6 +10,7 @@ from app.database.requests import (
     get_contacts_by_category,
     get_feature_values,
     get_items_by_feature,
+    get_items_by_filters,
 )
 
 router = Router()
