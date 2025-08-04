@@ -1,9 +1,15 @@
 import os
+from pathlib import Path
+
 from sqlalchemy import String, BigInteger, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 
-DB_URL = os.getenv('DB_URL', 'sqlite+aiosqlite:///оригинал.sqlite3')
+# Build absolute path to the default SQLite database so that the bot works
+# regardless of the current working directory.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+default_db_path = BASE_DIR / "оригинал.sqlite3"
+DB_URL = os.getenv('DB_URL', f"sqlite+aiosqlite:///{default_db_path.as_posix()}")
 engine = create_async_engine(url=DB_URL, echo=True)
 async_session = async_sessionmaker(engine)
 
