@@ -39,8 +39,8 @@ def feature_values(feature, values):
 def feature_items(feature, value, items):
     keyboard = InlineKeyboardBuilder()
     for item in items:
-        rowid = item[0]
-        name = item[1]
+        rowid = item["rowid"]
+        name = item["Наименование"]
         keyboard.row(
             InlineKeyboardButton(
                 text=name,

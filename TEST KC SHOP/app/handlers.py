@@ -95,8 +95,8 @@ async def item_handler(callback: CallbackQuery):
         return
 
     text = (
-        f"{item['Цена']}\n"
-        f"Цена: {item['Наименование']}\n"
+        f"{item['Наименование']}\n"
+        f"Цена: {item['Цена']}\n"
         f"Код: {item['Код']}\n"
         f"Вид: {item['Вид']}\n"
         f"Пустотность: {item['Пустотность']}\n"
